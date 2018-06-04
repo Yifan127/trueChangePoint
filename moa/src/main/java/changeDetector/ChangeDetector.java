@@ -3,21 +3,23 @@ package changeDetector;
 import moa.classifiers.core.driftdetection.ADWINChangeDetector;
 import moa.classifiers.core.driftdetection.CusumDM;
 import moa.classifiers.core.driftdetection.DDM;
+import moa.classifiers.core.driftdetection.HDDM_A_Test;
 import moa.classifiers.core.driftdetection.PageHinkleyDM;
+import moa.classifiers.core.driftdetection.SEEDAngleChangeDetector;
 import moa.classifiers.core.driftdetection.SEEDChangeDetector;
 
 public class ChangeDetector {
 	
-	public DDM getDDM(){
-		DDM detector = new DDM();
+	public CusumDM getCusum(){
+		CusumDM detector = new CusumDM();
 		detector.getOptions().resetToDefaults();
 		detector.prepareForUse();
 		
 		return detector;
 	}
 	
-	public CusumDM getCusum(){
-		CusumDM detector = new CusumDM();
+	public HDDM_A_Test getHDDMA(){
+		HDDM_A_Test detector = new HDDM_A_Test();
 		detector.getOptions().resetToDefaults();
 		detector.prepareForUse();
 		
@@ -42,6 +44,14 @@ public class ChangeDetector {
 	
 	public SEEDChangeDetector getSeed(){
 		SEEDChangeDetector detector = new SEEDChangeDetector();
+		detector.getOptions().resetToDefaults();
+		detector.prepareForUse();
+		
+		return detector;
+	}
+	
+	public SEEDAngleChangeDetector getSeedAngle(){
+		SEEDAngleChangeDetector detector = new SEEDAngleChangeDetector();
 		detector.getOptions().resetToDefaults();
 		detector.prepareForUse();
 		
