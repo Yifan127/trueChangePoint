@@ -13,6 +13,22 @@ import com.yahoo.labs.samoa.instances.InstancesHeader;
 import moa.core.ObjectRepository;
 import moa.tasks.TaskMonitor;
 
+/**
+ * Stream generator that adds log concept drift to examples in a stream.
+ *<br/><br/>
+ * Example:
+ *<br/><br/>
+ * <code>ConceptDriftStream -s (generators.AgrawalGenerator -f 7) <br/>
+ *    -d (generators.AgrawalGenerator -f 2) -w 1000000 -p 900000</code>
+ *<br/><br/>
+ * s : Stream <br/>
+ * d : Concept drift Stream<br/>
+ * p : Central position of concept drift change<br/>
+ * w : Width of concept drift change<br/>
+ *
+ * @author Yifan Zhang
+ * @version $Revision: 1 $
+ */
 
 public class LogConceptDriftStream extends ConceptDriftStream {
     
@@ -60,7 +76,6 @@ public class LogConceptDriftStream extends ConceptDriftStream {
     @Override
     public Example nextInstance() {
         numberInstanceStream++;
-        double k = 1.0 / (double) this.widthOption.getValue();
         double start = Math.ceil(this.positionOption.getValue() - this.widthOption.getValue() / 2);
         double end = Math.ceil(this.positionOption.getValue() + this.widthOption.getValue() / 2);
         double probabilityDrift = Math.log(numberInstanceStream - start) / Math.log(this.widthOption.getValue());
@@ -74,17 +89,18 @@ public class LogConceptDriftStream extends ConceptDriftStream {
                 return this.inputStream.nextInstance();
             } else {
             	LogConceptDriftStream.driftPoints.put(numberInstanceStream, probabilityDrift);
+            	if(!this.isChanged){
+            		this.trueChangePoint = numberInstanceStream;
+            		this.isChanged = true;
+            	}
                 return this.driftStream.nextInstance();
             }
         }
     }
     
+    @Override
     public TreeMap<Integer, Double> getDriftPoints() {
         return LogConceptDriftStream.driftPoints;
-    }
-    
-    public Integer getTrueChangePoint() {
-    	return LogConceptDriftStream.driftPoints.firstKey();
     }
 
 }

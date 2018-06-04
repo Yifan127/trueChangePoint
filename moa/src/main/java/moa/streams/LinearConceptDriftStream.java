@@ -5,26 +5,36 @@ import moa.core.FastVector;
 import moa.core.ObjectRepository;
 import moa.tasks.TaskMonitor;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
-
-import org.apache.commons.collections.CollectionUtils;
 
 import com.yahoo.labs.samoa.instances.Attribute;
 import com.yahoo.labs.samoa.instances.Instances;
 import com.yahoo.labs.samoa.instances.InstancesHeader;
 
+/**
+ * Stream generator that adds linear concept drift to examples in a stream.
+ *<br/><br/>
+ * Example:
+ *<br/><br/>
+ * <code>ConceptDriftStream -s (generators.AgrawalGenerator -f 7) <br/>
+ *    -d (generators.AgrawalGenerator -f 2) -w 1000000 -p 900000</code>
+ *<br/><br/>
+ * s : Stream <br/>
+ * d : Concept drift Stream<br/>
+ * p : Central position of concept drift change<br/>
+ * w : Width of concept drift change<br/>
+ *
+ * @author Yifan Zhang
+ * @version $Revision: 1 $
+ */
 
 public class LinearConceptDriftStream extends ConceptDriftStream {
 	
 	//private static List<Integer> driftPoints = new ArrayList<Integer>();
 	private static TreeMap<Integer,Double> driftPoints = new TreeMap<Integer,Double>();
-	protected InstancesHeader streamHeader;
-	public int start = this.positionOption.getValue() - this.widthOption.getValue() / 2;
-	public int end = this.positionOption.getValue() + this.widthOption.getValue() / 2;
+	
+	protected InstancesHeader streamHeader; 
 	
 	@Override
     public String getPurposeString() {
@@ -65,6 +75,8 @@ public class LinearConceptDriftStream extends ConceptDriftStream {
     @Override
     public Example nextInstance() {
         numberInstanceStream++;
+        int start = this.positionOption.getValue() - this.widthOption.getValue() / 2;
+    	int end = this.positionOption.getValue() + this.widthOption.getValue() / 2;
         double slope = 1.0 / (double) this.widthOption.getValue();
         double probabilityDrift = slope * (numberInstanceStream - start);
         
@@ -77,16 +89,18 @@ public class LinearConceptDriftStream extends ConceptDriftStream {
                 return this.inputStream.nextInstance();
             } else {
             	LinearConceptDriftStream.driftPoints.put(numberInstanceStream, probabilityDrift);
-                return this.driftStream.nextInstance();
+            	if(!this.isChanged){
+            		this.trueChangePoint = numberInstanceStream;
+            		this.isChanged = true;
+            	}
+            	return this.driftStream.nextInstance();
             }
         }
     }
     
+    @Override
     public TreeMap<Integer, Double> getDriftPoints() {
         return LinearConceptDriftStream.driftPoints;
     }
     
-    public Integer getTrueChangePoint() {
-    	return LinearConceptDriftStream.driftPoints.firstKey();
-    }
 }
