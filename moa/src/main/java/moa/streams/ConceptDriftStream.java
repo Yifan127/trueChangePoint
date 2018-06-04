@@ -20,14 +20,19 @@
 package moa.streams;
 
 import java.util.Random;
+import java.util.TreeMap;
+
 import moa.core.Example;
 
 import com.yahoo.labs.samoa.instances.InstancesHeader;
+
 import moa.core.ObjectRepository;
 import moa.options.AbstractOptionHandler;
 import moa.options.ClassOption;
+
 import com.github.javacliparser.FloatOption;
 import com.github.javacliparser.IntOption;
+
 import moa.tasks.TaskMonitor;
 
 /**
@@ -49,6 +54,11 @@ import moa.tasks.TaskMonitor;
 public class ConceptDriftStream extends AbstractOptionHandler implements
         InstanceStream {
 
+	//true change point
+	public static TreeMap<Integer,Double> driftPoints = new TreeMap<Integer,Double>();
+	protected boolean isChanged = false;
+	protected int trueChangePoint = 0;
+	
     @Override
     public String getPurposeString() {
         return "Adds Concept Drift to examples in a stream.";
@@ -125,9 +135,8 @@ public class ConceptDriftStream extends AbstractOptionHandler implements
         if (this.random.nextDouble() > probabilityDrift) {
             return this.inputStream.nextInstance();
         } else {
-            return this.driftStream.nextInstance();
+        	return this.driftStream.nextInstance();
         }
-
     }
 
     @Override
@@ -140,5 +149,19 @@ public class ConceptDriftStream extends AbstractOptionHandler implements
     @Override
     public void getDescription(StringBuilder sb, int indent) {
         // TODO Auto-generated method stub
+    }
+    
+    public TreeMap<Integer, Double> getDriftPoints() {
+        return ConceptDriftStream.driftPoints;
+    }
+    
+    public int getTrueChangePoint() {
+    	//return ConceptDriftStream.driftPoints.firstKey();
+    	//System.out.println("true change point: " + this.trueChangePoint);
+    	return this.trueChangePoint;
+    }
+    
+    public boolean isChangePoint(){
+    	return this.isChanged;
     }
 }
