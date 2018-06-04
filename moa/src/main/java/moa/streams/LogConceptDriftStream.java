@@ -32,8 +32,6 @@ import moa.tasks.TaskMonitor;
 
 public class LogConceptDriftStream extends ConceptDriftStream {
     
-	//private static List<Integer> driftPoints = new ArrayList<Integer>();
-	private static TreeMap<Integer,Double> driftPoints = new TreeMap<Integer,Double>();
 	protected InstancesHeader streamHeader;
 		
 	@Override

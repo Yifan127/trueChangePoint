@@ -30,10 +30,7 @@ import com.yahoo.labs.samoa.instances.InstancesHeader;
  */
 
 public class LinearConceptDriftStream extends ConceptDriftStream {
-	
-	//private static List<Integer> driftPoints = new ArrayList<Integer>();
-	private static TreeMap<Integer,Double> driftPoints = new TreeMap<Integer,Double>();
-	
+
 	protected InstancesHeader streamHeader; 
 	
 	@Override
