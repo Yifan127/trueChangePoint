@@ -19,8 +19,12 @@
 package moa.classifiers.drift;
 
 import com.yahoo.labs.samoa.instances.Instance;
+
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
 import moa.classifiers.AbstractClassifier;
 import moa.classifiers.Classifier;
 import moa.classifiers.MultiClassClassifier;
@@ -47,6 +51,8 @@ import moa.options.ClassOption;
 public class DriftDetectionMethodClassifier extends AbstractClassifier implements MultiClassClassifier {
 
     private static final long serialVersionUID = 1L;
+    //store the detected change points
+    protected List<Integer> detectedChangePoints = new ArrayList<Integer>();
 
     @Override
     public String getPurposeString() {
@@ -66,7 +72,7 @@ public class DriftDetectionMethodClassifier extends AbstractClassifier implement
     protected ChangeDetector driftDetectionMethod;
 
     protected boolean newClassifierReset;
-    //protected int numberInstances = 0;
+    protected int numberInstances = 0;
 
     protected int ddmLevel;
 
@@ -100,7 +106,7 @@ public class DriftDetectionMethodClassifier extends AbstractClassifier implement
 
     @Override
     public void trainOnInstanceImpl(Instance inst) {
-        //this.numberInstances++;
+        this.numberInstances++;
         int trueClass = (int) inst.classValue();
         boolean prediction;
         if (Utils.maxIndex(this.classifier.getVotesForInstance(inst)) == trueClass) {
@@ -112,7 +118,9 @@ public class DriftDetectionMethodClassifier extends AbstractClassifier implement
         this.driftDetectionMethod.input(prediction ? 0.0 : 1.0);
         this.ddmLevel = DDM_INCONTROL_LEVEL;
         if (this.driftDetectionMethod.getChange()) {
-         this.ddmLevel =  DDM_OUTCONTROL_LEVEL;
+        	this.ddmLevel =  DDM_OUTCONTROL_LEVEL;
+	         //save detected change points to list
+	         this.detectedChangePoints.add(numberInstances);
         }
         if (this.driftDetectionMethod.getWarningZone()) {
            this.ddmLevel =  DDM_WARNING_LEVEL;
@@ -183,6 +191,31 @@ public class DriftDetectionMethodClassifier extends AbstractClassifier implement
         this.changeDetected = 0;
         this.warningDetected = 0;
         return measurementList.toArray(new Measurement[measurementList.size()]);
+    }
+    
+    public List<Integer> getDetectedChangePoints(){
+    	Collections.sort(this.detectedChangePoints);
+    	return this.detectedChangePoints;
+    }
+    
+    public Integer getFirstChangePoint(int trueChangePoint){
+		Integer firstDetectedChange = 0;
+		List<Integer> detectedChanges = this.getDetectedChangePoints();
+		if(!detectedChanges.isEmpty()){
+			//System.out.println("detected change points: " + detectedChanges);
+			int index = Collections.binarySearch(detectedChanges, trueChangePoint);
+			if(detectedChanges.contains(trueChangePoint)){
+				firstDetectedChange = detectedChanges.get(index);
+			}else if(index != detectedChanges.size()){
+				firstDetectedChange = detectedChanges.get(-index-1);
+			}	
+		}
+		System.out.println("first detected change point: " + firstDetectedChange);
+		return firstDetectedChange;
+	}
+    
+    public ChangeDetector getChangeDetector(){
+    	return this.driftDetectionMethod;
     }
 
 }
