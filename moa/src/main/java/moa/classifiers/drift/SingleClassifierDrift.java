@@ -19,6 +19,18 @@
  */
 package moa.classifiers.drift;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import moa.classifiers.Classifier;
+import moa.classifiers.meta.WEKAClassifier;
+import moa.core.Utils;
+import moa.streams.ConceptDriftStream;
+
+import com.yahoo.labs.samoa.instances.Instance;
+
+import driftStreams.DriftStreams;
+
 
 /**
  * Class for handling concept drift datasets with a wrapper on a
@@ -35,6 +47,102 @@ package moa.classifiers.drift;
  * @version 1.1
  */
 public class SingleClassifierDrift extends DriftDetectionMethodClassifier{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+    protected boolean isDetected = false;
+    protected long trueChangePoint;
+    protected int changeDetected = 0;
+    
+    public void setTrueChangePoint(long truePoint){
+    	this.trueChangePoint = truePoint;
+    }
+    
+    public void resetNumberInstances(){
+    	this.numberInstances = 0;
+    }
+    
+    public void resetChangeDetected(){
+    	this.changeDetected = 0;
+    }
+    
+    public void trainOnInstanceImpl(Instance inst) {
+        this.numberInstances++;
+        int trueClass = (int) inst.classValue();
+        boolean prediction;
+        if (Utils.maxIndex(this.classifier.getVotesForInstance(inst)) == trueClass) {
+            prediction = true;
+        } else {
+            prediction = false;
+        }
+        //this.ddmLevel = this.driftDetectionMethod.computeNextVal(prediction);
+        this.driftDetectionMethod.input(prediction ? 0.0 : 1.0);
+        this.ddmLevel = DDM_INCONTROL_LEVEL;
+        
+        /*
+        if (this.driftDetectionMethod.getChange()) {
+        	this.ddmLevel =  DDM_OUTCONTROL_LEVEL;
+	         //save detected change points to list
+	         detectedChangePoints.add(numberInstances);
+        }
+        */
+        if (this.driftDetectionMethod.getWarningZone()) {
+           this.ddmLevel =  DDM_WARNING_LEVEL;
+        }
+        
+        
+    	if(!this.isDetected){
+    		if (this.driftDetectionMethod.getChange()) {
+    			//System.out.println("detected change:" + this.numberInstances);         	
+            	if(this.numberInstances >= this.trueChangePoint){
+            		this.ddmLevel =  DDM_OUTCONTROL_LEVEL;
+            		this.isDetected = true;
+            	}
+            }
+    	}
+    	
+        
+           	
+        switch (this.ddmLevel) {
+        	
+            case DDM_WARNING_LEVEL:
+                //System.out.println("1 0 W");
+            	//System.out.println("DDM_WARNING_LEVEL");
+                if (newClassifierReset == true) {
+                    this.warningDetected++;
+                    this.newclassifier.resetLearning();
+                    newClassifierReset = false;
+                }
+                this.newclassifier.trainOnInstance(inst);
+                break;
+            
+
+            case DDM_OUTCONTROL_LEVEL:
+                //System.out.println("0 1 O");
+            	//System.out.println("DDM_OUTCONTROL_LEVEL");
+                this.changeDetected++;
+                this.classifier = null;
+                this.classifier = this.newclassifier;
+                if (this.classifier instanceof WEKAClassifier) {
+                    ((WEKAClassifier) this.classifier).buildClassifier();
+                }
+                this.newclassifier = ((Classifier) getPreparedClassOption(this.baseLearnerOption)).copy();
+                this.newclassifier.resetLearning();
+                break;
+
+            case DDM_INCONTROL_LEVEL:
+                //System.out.println("0 0 I");
+            	//System.out.println("DDM_INCONTROL_LEVEL");
+                newClassifierReset = true;
+                break;
+            default:
+            //System.out.println("ERROR!");
+
+        }
+
+        this.classifier.trainOnInstance(inst);
+    }
 
 
 }
