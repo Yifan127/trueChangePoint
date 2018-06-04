@@ -4,14 +4,12 @@ package driftStreams;
 import moa.streams.InstanceStream;
 import moa.streams.LinearConceptDriftStream;
 import moa.streams.LogConceptDriftStream;
-import moa.streams.QuadraticConceptDriftStream;
 import moa.streams.SigmoidConceptDriftStream;
 
 public class DriftStreams {
 	
 	private LinearConceptDriftStream linearDrift;
 	private LogConceptDriftStream logDrift;
-	private QuadraticConceptDriftStream quadraticDrift;
 	private SigmoidConceptDriftStream sigmoidDrift;
 	
 	public LinearConceptDriftStream generateLinearDriftStream(InstanceStream inputStream, 
@@ -40,19 +38,7 @@ public class DriftStreams {
 		return logDrift;
 	}
 	
-	public QuadraticConceptDriftStream generateQuadraticDriftStream(InstanceStream inputStream, 
-			InstanceStream driftStream, int center, int width){
-		//drift control
-		quadraticDrift = new QuadraticConceptDriftStream();
-		quadraticDrift.streamOption.setCurrentObject(inputStream);
-		quadraticDrift.driftstreamOption.setCurrentObject(driftStream);
-		quadraticDrift.positionOption.setValue(center);
-		quadraticDrift.widthOption.setValue(width);
-		quadraticDrift.prepareForUse();
-		
-		return quadraticDrift;
-	}
-	
+
 	public SigmoidConceptDriftStream generateSigmoidDriftStream(InstanceStream inputStream, 
 			InstanceStream driftStream, int center, int width){
 		//drift control
